@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tic-Tac-Toe</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background: linear-gradient(135deg, #74ebd5 0%, #9face6 100%);
+    }
+
+    .game-container {
+      text-align: center;
+      max-width: 400px;
+      width: 90%;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+      font-size: 2rem;
+      color: #333;
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .cell {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      background: #fff;
+      border-radius: 10px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 2.5rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .cell:hover {
+      background: #f0f0f0;
+    }
+
+    .status {
+      margin-top: 20px;
+      font-size: 1.2rem;
+      color: #333;
+    }
+
+    button {
+      margin-top: 15px;
+      padding: 10px 20px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 8px;
+      background: #4CAF50;
+      color: white;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background: #45a049;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 500px) {
+      h1 {
+        font-size: 1.5rem;
+      }
+      .cell {
+        font-size: 2rem;
+      }
+      .status {
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="game-container">
+    <h1>Tic-Tac-Toe</h1>
+    <div class="board" id="board"></div>
+    <div class="status" id="status">Player X's turn</div>
+    <button onclick="resetGame()">Restart</button>
+  </div>
+
+  <script>
+    const board = document.getElementById('board');
+    const statusText = document.getElementById('status');
+    let currentPlayer = 'X';
+    let gameActive = true;
+    let gameState = ["", "", "", "", "", "", "", "", ""];
+
+    const winningConditions = [
+      [0, 1, 2],
+      [3, 4, 5],
+      [6, 7, 8],
+      [0, 3, 6],
+      [1, 4, 7],
+      [2, 5, 8],
+      [0, 4, 8],
+      [2, 4, 6]
+    ];
+
+    function createBoard() {
+      board.innerHTML = '';
+      gameState.forEach((_, index) => {
+        const cell = document.createElement('div');
+        cell.classList.add('cell');
+        cell.setAttribute('data-index', index);
+        cell.addEventListener('click', handleCellClick);
+        board.appendChild(cell);
+      });
+    }
+
+    function handleCellClick(e) {
+      const index = e.target.getAttribute('data-index');
+      if (gameState[index] !== "" || !gameActive) return;
+
+      gameState[index] = currentPlayer;
+      e.target.textContent = currentPlayer;
+
+      if (checkWinner()) {
+        statusText.textContent = `Player ${currentPlayer} wins! 🎉`;
+        gameActive = false;
+      } else if (!gameState.includes("")) {
+        statusText.textContent = "It's a draw! 🤝";
+        gameActive = false;
+      } else {
+        currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+        statusText.textContent = `Player ${currentPlayer}'s turn`;
+      }
+    }
+
+    function checkWinner() {
+      return winningConditions.some(condition => {
+        return condition.every(index => gameState[index] === currentPlayer);
+      });
+    }
+
+    function resetGame() {
+      currentPlayer = 'X';
+      gameActive = true;
+      gameState = ["", "", "", "", "", "", "", "", ""];
+      statusText.textContent = `Player X's turn`;
+      createBoard();
+    }
+
+    createBoard();
+  </script>
+</body>
+</html>
