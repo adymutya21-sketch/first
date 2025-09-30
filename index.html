@@ -1,163 +1,96 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tic-Tac-Toe</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-      background: linear-gradient(135deg, #74ebd5 0%, #9face6 100%);
-    }
-
-    .game-container {
-      text-align: center;
-      max-width: 400px;
-      width: 90%;
-    }
-
-    h1 {
-      margin-bottom: 20px;
-      font-size: 2rem;
-      color: #333;
-    }
-
-    .board {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-    }
-
-    .cell {
-      width: 100%;
-      aspect-ratio: 1 / 1;
-      background: #fff;
-      border-radius: 10px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-size: 2.5rem;
-      font-weight: bold;
-      cursor: pointer;
-      transition: background 0.3s;
-    }
-
-    .cell:hover {
-      background: #f0f0f0;
-    }
-
-    .status {
-      margin-top: 20px;
-      font-size: 1.2rem;
-      color: #333;
-    }
-
-    button {
-      margin-top: 15px;
-      padding: 10px 20px;
-      font-size: 1rem;
-      border: none;
-      border-radius: 8px;
-      background: #4CAF50;
-      color: white;
-      cursor: pointer;
-      transition: background 0.3s;
-    }
-
-    button:hover {
-      background: #45a049;
-    }
-
-    /* Responsive adjustments */
-    @media (max-width: 500px) {
-      h1 {
-        font-size: 1.5rem;
-      }
-      .cell {
-        font-size: 2rem;
-      }
-      .status {
-        font-size: 1rem;
-      }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>Realtime Sensor Monitoring</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f0f0f0; }
+        h1 { text-align: center; }
+        table { margin: auto; border-collapse: collapse; width: 80%; }
+        th, td { padding: 10px; text-align: center; border: 1px solid #333; }
+        th { background-color: #555; color: white; }
+        td { background-color: #fff; }
+        #alerts { margin: 20px auto; width: 80%; padding: 10px; background: #ffcccc; color: #900; font-weight: bold; text-align: center; border-radius: 5px; display: none; }
+        #buttons { text-align: center; margin-top: 20px; }
+        button { padding: 10px 20px; margin: 0 10px; font-size: 16px; }
+    </style>
 </head>
 <body>
-  <div class="game-container">
-    <h1>Tic-Tac-Toe</h1>
-    <div class="board" id="board"></div>
-    <div class="status" id="status">Player X's turn</div>
-    <button onclick="resetGame()">Restart</button>
-  </div>
+    <h1>Realtime Sensor Monitoring</h1>
+    <div id="alerts"></div>
 
-  <script>
-    const board = document.getElementById('board');
-    const statusText = document.getElementById('status');
-    let currentPlayer = 'X';
-    let gameActive = true;
-    let gameState = ["", "", "", "", "", "", "", "", ""];
+    <table>
+        <thead>
+            <tr>
+                <th>Temperature (&deg;C)</th>
+                <th>Humidity (%)</th>
+                <th>Light (%)</th>
+                <th>MQ135</th>
+                <th>Rain (%)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td id="temperature">-</td>
+                <td id="humidity">-</td>
+                <td id="light">-</td>
+                <td id="mq135">-</td>
+                <td id="rain">-</td>
+            </tr>
+        </tbody>
+    </table>
 
-    const winningConditions = [
-      [0, 1, 2],
-      [3, 4, 5],
-      [6, 7, 8],
-      [0, 3, 6],
-      [1, 4, 7],
-      [2, 5, 8],
-      [0, 4, 8],
-      [2, 4, 6]
-    ];
+    <div id="buttons">
+        <button onclick="manualRetract()">Manual Retract</button>
+        <button onclick="manualReverse()">Manual Reverse</button>
+        <button onclick="turnOnSteamer()">Turn On Steamer</button>
+    </div>
 
-    function createBoard() {
-      board.innerHTML = '';
-      gameState.forEach((_, index) => {
-        const cell = document.createElement('div');
-        cell.classList.add('cell');
-        cell.setAttribute('data-index', index);
-        cell.addEventListener('click', handleCellClick);
-        board.appendChild(cell);
-      });
-    }
+    <script>
+        const socket = io(); // auto-connect to server
 
-    function handleCellClick(e) {
-      const index = e.target.getAttribute('data-index');
-      if (gameState[index] !== "" || !gameActive) return;
+        socket.on('connect', () => console.log("Connected to server"));
+        socket.on('disconnect', () => console.log("Disconnected from server"));
 
-      gameState[index] = currentPlayer;
-      e.target.textContent = currentPlayer;
+        socket.on('sensor_data', function(data) {
+            console.log("Received:", data);
 
-      if (checkWinner()) {
-        statusText.textContent = `Player ${currentPlayer} wins! 🎉`;
-        gameActive = false;
-      } else if (!gameState.includes("")) {
-        statusText.textContent = "It's a draw! 🤝";
-        gameActive = false;
-      } else {
-        currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
-        statusText.textContent = `Player ${currentPlayer}'s turn`;
-      }
-    }
+            document.getElementById('temperature').textContent = data.temperature;
+            document.getElementById('humidity').textContent = data.humidity;
+            document.getElementById('light').textContent = data.light;
+            document.getElementById('mq135').textContent = data.mq135;
+            document.getElementById('rain').textContent = data.rain;
 
-    function checkWinner() {
-      return winningConditions.some(condition => {
-        return condition.every(index => gameState[index] === currentPlayer);
-      });
-    }
+            const alertsDiv = document.getElementById('alerts');
+            if (data.alerts && data.alerts.length > 0) {
+                alertsDiv.style.display = 'block';
+                alertsDiv.innerHTML = data.alerts.join('<br>');
 
-    function resetGame() {
-      currentPlayer = 'X';
-      gameActive = true;
-      gameState = ["", "", "", "", "", "", "", "", ""];
-      statusText.textContent = `Player X's turn`;
-      createBoard();
-    }
+                if (Notification.permission === "granted") {
+                    data.alerts.forEach(alert => new Notification(alert));
+                }
+            } else {
+                alertsDiv.style.display = 'none';
+                alertsDiv.innerHTML = '';
+            }
+        });
 
-    createBoard();
-  </script>
+        if (Notification.permission !== "granted") {
+            Notification.requestPermission();
+        }
+
+        function manualRetract() {
+            socket.emit('manual_retract');
+        }
+
+        function manualReverse() {
+            socket.emit('manual_reverse');
+        }
+
+        function turnOnSteamer() {
+            socket.emit('steamer_on');
+        }
+    </script>
 </body>
 </html>
